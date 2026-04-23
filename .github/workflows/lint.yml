@@ -1,0 +1,171 @@
+name: wiki-lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate vault structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Validate manifest schema
+        run: |
+          python3 - <<'PY'
+          import json
+          with open('.raw/.manifest.json') as f:
+              d = json.load(f)
+          assert d['version'] == 1, f"manifest version must be 1, got {d['version']}"
+          assert 'sources' in d
+          assert 'projects' in d
+          assert 'stats' in d
+          assert d['schema'].startswith('obsidian-wiki-super-setup'), f"unexpected schema: {d['schema']}"
+          print(f"✓ manifest valid (schema={d['schema']}, sources={len(d['sources'])})")
+          PY
+
+      - name: Validate all wiki page frontmatter
+        run: |
+          python3 - <<'PY'
+          import os, sys, yaml
+          REQUIRED = {'type', 'title', 'created', 'updated', 'tags', 'status', 'summary', 'provenance', 'confidence'}
+          fails = []
+          for root, _, files in os.walk('wiki'):
+              for fn in files:
+                  if not fn.endswith('.md'):
+                      continue
+                  p = os.path.join(root, fn)
+                  with open(p) as f:
+                      text = f.read()
+                  if not text.startswith('---'):
+                      fails.append(f"{p}: missing frontmatter")
+                      continue
+                  end = text.find('---', 3)
+                  if end < 0:
+                      fails.append(f"{p}: malformed frontmatter (no closing ---)")
+                      continue
+                  try:
+                      fm = yaml.safe_load(text[3:end]) or {}
+                  except Exception as e:
+                      fails.append(f"{p}: yaml parse error — {e}")
+                      continue
+                  missing = REQUIRED - set(fm.keys())
+                  if missing:
+                      fails.append(f"{p}: missing fields — {sorted(missing)}")
+                  if 'summary' in fm and isinstance(fm['summary'], str) and len(fm['summary']) > 200:
+                      fails.append(f"{p}: summary > 200 chars ({len(fm['summary'])})")
+          if fails:
+              print('\n'.join('✗ ' + s for s in fails))
+              sys.exit(1)
+          print('✓ all wiki page frontmatter valid')
+          PY
+
+      - name: Validate all template frontmatter
+        run: |
+          python3 - <<'PY'
+          import os, sys, yaml
+          REQUIRED = {'type', 'title', 'tags', 'status', 'summary', 'provenance', 'confidence'}
+          fails = []
+          for fn in os.listdir('_templates'):
+              if not fn.endswith('.md'):
+                  continue
+              p = os.path.join('_templates', fn)
+              with open(p) as f:
+                  text = f.read()
+              end = text.find('---', 3)
+              fm = yaml.safe_load(text[3:end]) or {}
+              missing = REQUIRED - set(fm.keys())
+              if missing:
+                  fails.append(f"{p}: missing — {sorted(missing)}")
+          if fails:
+              print('\n'.join('✗ ' + s for s in fails))
+              sys.exit(1)
+          print('✓ all template frontmatter valid')
+          PY
+
+      - name: Validate skill frontmatter spec compliance
+        run: |
+          python3 - <<'PY'
+          import os, sys, yaml
+          ALLOWED_FIELDS = {'name', 'description'}
+          fails = []
+          for d in os.listdir('skills'):
+              p = os.path.join('skills', d, 'SKILL.md')
+              if not os.path.isfile(p):
+                  continue
+              with open(p) as f:
+                  text = f.read()
+              end = text.find('---', 3)
+              fm = yaml.safe_load(text[3:end]) or {}
+              extra = set(fm.keys()) - ALLOWED_FIELDS
+              if extra:
+                  fails.append(f"{p}: non-spec fields — {sorted(extra)}")
+              if fm.get('name') != d:
+                  fails.append(f"{p}: name '{fm.get('name')}' does not match dir '{d}'")
+          if fails:
+              print('\n'.join('✗ ' + s for s in fails))
+              sys.exit(1)
+          print('✓ all skills spec-compliant')
+          PY
+
+      - name: Check for personal info leaks
+        run: |
+          # These patterns should never appear in a published vault
+          PATTERNS='\.local|password|api[_-]key|secret|token|@gmail|@outlook|@yahoo'
+          if grep -rEn "$PATTERNS" \
+              --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.archive \
+              --exclude-dir=.github 2>/dev/null; then
+              echo "✗ Personal info pattern leak detected — fix before merging."
+              exit 1
+          fi
+          echo "✓ no personal-info patterns detected"
+
+      - name: Check for AI-writing tells in synthesis pages
+        run: |
+          python3 - <<'PY'
+          import os, re, sys, yaml
+          AI_VOCAB = re.compile(r'\b(delve|tapestry|pivotal|crucial|vibrant|meticulous|intricate|boasts|testament|garner|foster|cultivate|bolster|underscore|emphasize|highlight|navigate the complexities|seamless)\b', re.I)
+          warnings = []
+          for root, _, files in os.walk('wiki'):
+              for fn in files:
+                  if not fn.endswith('.md'):
+                      continue
+                  p = os.path.join(root, fn)
+                  with open(p) as f:
+                      text = f.read()
+                  if not text.startswith('---'):
+                      continue
+                  end = text.find('---', 3)
+                  try:
+                      fm = yaml.safe_load(text[3:end]) or {}
+                  except Exception:
+                      continue
+                  body = text[end+3:]
+                  prov = fm.get('provenance', {})
+                  if not isinstance(prov, dict):
+                      continue
+                  inf = prov.get('inferred', 0)
+                  if inf > 0.4:
+                      hits = AI_VOCAB.findall(body)
+                      if len(hits) >= 4:
+                          warnings.append(f"{p}: {len(hits)} AI vocab hits — consider running humanize")
+          for w in warnings:
+              print('⚠', w)
+          if warnings:
+              print(f"\n{len(warnings)} synthesis-heavy pages have AI-writing tells.")
+              print("Run `humanize batch --pattern vocabulary` to fix.")
+          # warnings only — don't fail the build
+          print('✓ AI-writing scan complete')
+          PY
