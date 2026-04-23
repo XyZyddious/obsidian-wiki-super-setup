@@ -122,15 +122,49 @@ jobs:
 
       - name: Check for personal info leaks
         run: |
-          # These patterns should never appear in a published vault
-          PATTERNS='\.local|password|api[_-]key|secret|token|@gmail|@outlook|@yahoo'
-          if grep -rEn "$PATTERNS" \
-              --exclude-dir=.git --exclude-dir=.obsidian --exclude-dir=.archive \
-              --exclude-dir=.github 2>/dev/null; then
-              echo "✗ Personal info pattern leak detected — fix before merging."
-              exit 1
-          fi
-          echo "✓ no personal-info patterns detected"
+          # Scoped to actual wiki content (not schema/docs that describe PII patterns).
+          # Patterns look for key:value shapes — bare words like "token" or "password"
+          # legitimately appear in documentation about what to scan for.
+          python3 - <<'PY'
+          import os, re, sys
+
+          # key: value or key=value with a non-trivial value
+          KV = re.compile(r'\b(password|api[_-]key|secret|token|access[_-]token|bearer)\s*[:=]\s*[\'"]?[A-Za-z0-9_\-]{6,}', re.I)
+          # personal email domains with an actual address (not just the bare domain)
+          EMAIL = re.compile(r'\b[A-Za-z0-9._%+-]+@(gmail|outlook|yahoo|hotmail|icloud)\.[A-Za-z]{2,}', re.I)
+          # hostname patterns like "<name>s-MacBook-Pro.local"
+          HOSTNAME = re.compile(r'\b[A-Za-z0-9_-]+\.local\b')
+          # GitHub-style PATs and OpenAI-style keys
+          KEY = re.compile(r'\b(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{30,})\b')
+
+          fails = []
+          # Only scan real content directories, not docs that describe the patterns
+          targets = ['wiki', '.raw', '_templates']
+          skip_files = {'wiki/meta/taxonomy.md'}  # documents the patterns themselves
+
+          for tgt in targets:
+              if not os.path.isdir(tgt):
+                  continue
+              for root, _, files in os.walk(tgt):
+                  for fn in files:
+                      if not fn.endswith(('.md', '.json', '.txt', '.yml', '.yaml')):
+                          continue
+                      p = os.path.join(root, fn)
+                      if p in skip_files:
+                          continue
+                      with open(p, errors='ignore') as f:
+                          text = f.read()
+                      for label, rx in [('kv-secret', KV), ('personal-email', EMAIL), ('hostname', HOSTNAME), ('api-key', KEY)]:
+                          for m in rx.finditer(text):
+                              line = text[:m.start()].count('\n') + 1
+                              fails.append(f"{p}:{line}: {label} — {m.group(0)[:60]}")
+
+          if fails:
+              print('\n'.join('✗ ' + s for s in fails))
+              print(f"\n{len(fails)} potential leaks detected — review before merging.")
+              sys.exit(1)
+          print('✓ no personal-info patterns detected in wiki content')
+          PY
 
       - name: Check for AI-writing tells in synthesis pages
         run: |
