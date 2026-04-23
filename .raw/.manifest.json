@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "schema": "obsidian-wiki-super-setup-1.0",
+  "last_updated": null,
+  "sources": {},
+  "projects": {},
+  "stats": {
+    "total_sources_ingested": 0,
+    "total_pages": 0,
+    "total_projects": 0,
+    "last_full_rebuild": null
+  },
+  "_schema_doc": {
+    "sources": "keyed by relative path under .raw/. Each value: {ingested_at, size_bytes, modified_at, content_hash, source_type, project, pages_created, pages_updated}",
+    "projects": "keyed by project name. Each value: {source_path, vault_path, last_ingested, sources_ingested, total_sources}",
+    "stats": "vault-wide counters. last_full_rebuild is the most recent /wiki-rebuild operation.",
+    "source_type_values": ["document", "image", "web", "meeting", "email", "transcript", "conversation", "data"]
+  }
+}

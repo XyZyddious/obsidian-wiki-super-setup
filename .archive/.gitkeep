@@ -1,0 +1,6 @@
+# .archive/
+
+Snapshots created by `wiki-rebuild` go here as `<ISO-timestamp>/` subdirectories,
+each with an `archive-meta.json` describing what was archived and why.
+
+This folder is hidden from Obsidian via the dot-prefix.

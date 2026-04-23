@@ -1,0 +1,10 @@
+# wiki/_raw/
+
+In-vault drafts staging. Type fast notes here, then promote to proper wiki pages later by running `ingest raw drafts`.
+
+This is DIFFERENT from `.raw/` at the vault root:
+
+- `.raw/` (root, hidden) — immutable source documents (PDFs, articles, transcripts).
+- `wiki/_raw/` (visible in Obsidian) — your own quick drafts that need processing.
+
+The ingest workflow promotes drafts here into proper categorized wiki pages, then DELETES the original draft.

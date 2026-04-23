@@ -1,0 +1,145 @@
+filters:
+  and:
+    - file.folder.startsWith("wiki")
+    - file.ext == "md"
+    - file.name != "_index"
+
+properties:
+  type:
+    displayName: Type
+  status:
+    displayName: Status
+  confidence:
+    displayName: Conf
+  updated:
+    displayName: Updated
+  summary:
+    displayName: Summary
+
+views:
+  - type: table
+    name: All wiki pages
+    order:
+      - file.name
+      - type
+      - status
+      - confidence
+      - updated
+      - summary
+    sort:
+      - property: updated
+        direction: DESC
+    limit: 100
+
+  - type: table
+    name: Recently updated
+    order:
+      - file.name
+      - type
+      - updated
+      - summary
+    filters:
+      and:
+        - updated >= dateModify(now(), "-14d")
+    sort:
+      - property: updated
+        direction: DESC
+
+  - type: table
+    name: Pages missing summary
+    filters:
+      and:
+        - "!summary OR length(summary) == 0"
+    order:
+      - file.name
+      - type
+      - updated
+
+  - type: table
+    name: Low confidence (high inferred)
+    filters:
+      and:
+        - confidence == "low"
+    order:
+      - file.name
+      - type
+      - confidence
+      - provenance.inferred
+      - updated
+    sort:
+      - property: provenance.inferred
+        direction: DESC
+
+  - type: table
+    name: Speculation-heavy (ambiguous > 15%)
+    filters:
+      and:
+        - provenance.ambiguous > 0.15
+    order:
+      - file.name
+      - provenance.ambiguous
+      - confidence
+
+  - type: table
+    name: Internal / PII (do not export)
+    filters:
+      or:
+        - file.tags.contains("visibility/internal")
+        - file.tags.contains("visibility/pii")
+    order:
+      - file.name
+      - file.tags
+      - updated
+
+  - type: cards
+    name: Open questions
+    filters:
+      and:
+        - type == "question"
+        - answer_quality != "definitive"
+    order:
+      - file.name
+      - summary
+      - answer_quality
+      - updated
+
+  - type: cards
+    name: Decisions in flight
+    filters:
+      and:
+        - type == "decision"
+        - decision_status == "proposed"
+    order:
+      - file.name
+      - summary
+      - priority
+      - due_date
+    sort:
+      - property: priority
+        direction: ASC
+
+  - type: list
+    name: Superseded (consider archive)
+    filters:
+      and:
+        - status == "superseded"
+        - updated < dateModify(now(), "-180d")
+    order:
+      - file.name
+      - superseded_by
+      - updated
+
+  - type: cards
+    name: Recent sources ingested
+    filters:
+      and:
+        - type == "source"
+    order:
+      - file.name
+      - source_type
+      - date_published
+      - summary
+    sort:
+      - property: updated
+        direction: DESC
+    limit: 20

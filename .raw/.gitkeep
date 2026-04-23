@@ -1,0 +1,7 @@
+# .raw/
+
+Source documents. IMMUTABLE — Claude reads but never modifies.
+
+Drop any source here (markdown, PDF, txt, json, image, transcript) and tell Claude `ingest [filename]`. The hash-based manifest in `.manifest.json` tracks what's been processed so re-ingesting only touches new/changed files.
+
+This folder is hidden from Obsidian via the dot-prefix.

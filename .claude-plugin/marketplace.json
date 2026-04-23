@@ -1,0 +1,24 @@
+{
+  "name": "obsidian-wiki-super-setup-marketplace",
+  "owner": {
+    "name": "obsidian-wiki super setup contributors"
+  },
+  "metadata": {
+    "description": "obsidian-wiki super setup: LLM Wiki synthesis for Obsidian (Karpathy + rohitg00 + agrici + ar9av).",
+    "version": "2.0.0"
+  },
+  "plugins": [
+    {
+      "name": "obsidian-wiki-super-setup",
+      "source": {
+        "source": "local"
+      },
+      "description": "An LLM-maintained, persistent, compounding knowledge base for Obsidian. Synthesizes the best of four LLM-Wiki implementations into one super-setup. 14 wiki skills + inherited utilities. Required frontmatter (summary/provenance/confidence). Tag elicitation at ingest time. Self-healing 14-check lint with AI-writing detection. Pre-publish audit. Graph export with interactive HTML viewer.",
+      "version": "2.0.0",
+      "author": {
+        "name": "obsidian-wiki super setup contributors"
+      },
+      "license": "MIT"
+    }
+  ]
+}
