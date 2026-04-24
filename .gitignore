@@ -33,10 +33,12 @@ node_modules/
 .env.local
 *.local.md
 
-# Personal files dropped into vault root by Obsidian (don't commit these)
-WIKI*.md
-PROMPT.md
-Welcome.md
+# Personal files dropped into vault root by Obsidian (don't commit these).
+# NOTE: anchored to root and using a dash so we don't accidentally hide
+# the schema reference (WIKI.md) or any agents/commands matching wiki-*.md.
+/WIKI-*.md
+/PROMPT.md
+/Welcome.md
 *.tmp.*
 Obsidian vault*
 Untitled.canvas
