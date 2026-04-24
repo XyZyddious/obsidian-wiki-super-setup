@@ -3,7 +3,8 @@
   "version": "2.0.0",
   "description": "An LLM-maintained, persistent, compounding knowledge base for Obsidian. Synthesizes the best of Karpathy's LLM Wiki gist, rohitg00's v2 patterns, AgriciDaniel/claude-obsidian, and Ar9av/obsidian-wiki. 14 wiki skills (ingest/query/lint/status/cross-linker/tag-taxonomy/rebuild/export/humanize/publish-check/daily/search/migrate + orchestrator) plus inherited utilities. Required frontmatter: summary, provenance, confidence. Tag elicitation via AskUserQuestion at ingest time so the user never edits taxonomy.md by hand. Content-trust boundary on every ingest. Self-healing 14-check lint with AI-writing detection and schema-version drift. Graph export to JSON/GraphML/Cypher/interactive HTML viewer with type/tag/confidence filters.",
   "author": {
-    "name": "obsidian-wiki super setup contributors"
+    "name": "XyZyddious",
+    "url": "https://github.com/XyZyddious"
   },
   "license": "MIT",
   "keywords": [

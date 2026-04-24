@@ -1,5 +1,7 @@
 # Claude-Obsidian Super Setup
 
+> Synthesized and maintained by [@XyZyddious](https://github.com/XyZyddious).
+
 A persistent, compounding knowledge vault for Claude + Obsidian. Synthesized from the four leading LLM-Wiki implementations:
 
 - **[Karpathy's LLM Wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** — the seed pattern: three-layer architecture, `index.md`, `log.md`, "compounding artifact" framing.

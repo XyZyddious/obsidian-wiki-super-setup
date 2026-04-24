@@ -59,7 +59,7 @@ The following community plugins ship with this vault as pre-installed binaries. 
 
 ## This synthesis
 
-- **Synthesizer:** obsidian-wiki super setup contributors
+- **Synthesizer:** [@XyZyddious](https://github.com/XyZyddious)
 - **License:** MIT (see [LICENSE](LICENSE))
 - **Schema version:** 2.0.0
 
